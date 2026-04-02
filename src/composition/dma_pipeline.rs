@@ -96,9 +96,18 @@ pub fn dma_pipeline(
         AxiLiteReadRequest::read(AxiAddress::new(REG_LENGTH)),
     );
 
-    let src_addr = AxiAddress::new(u32::try_from(rd_src.data()).unwrap_or(0));
-    let dst_addr = AxiAddress::new(u32::try_from(rd_dst.data()).unwrap_or(0));
-    let xfer_len = TransferLength::new(u32::try_from(rd_len.data()).unwrap_or(0));
+    let src_addr = AxiAddress::new(
+        u32::try_from(rd_src.data())
+            .map_err(|_| Error::AxiLite(format!("source address {:#x} exceeds u32", rd_src.data())))?,
+    );
+    let dst_addr = AxiAddress::new(
+        u32::try_from(rd_dst.data())
+            .map_err(|_| Error::AxiLite(format!("dest address {:#x} exceeds u32", rd_dst.data())))?,
+    );
+    let xfer_len = TransferLength::new(
+        u32::try_from(rd_len.data())
+            .map_err(|_| Error::AxiLite(format!("transfer length {:#x} exceeds u32", rd_len.data())))?,
+    );
 
     let xfer = DmaTransferDescriptor::new(src_addr, dst_addr, xfer_len);
     let (new_memory, transfer_result) = dma_transfer_golden(memory, &xfer);
